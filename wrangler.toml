@@ -1,0 +1,11 @@
+name = "shiftkeybot"
+main = "src/index.ts"
+compatibility_date = "2023-05-05"
+
+kv_namespaces = [
+  { binding = "KNOWN_CODES", id = "c3764de02e8d4ad68678e85519381195", preview_id="9586ae90fc364470ad447fcf294cc7e9" }
+]
+
+[triggers]
+crons = [ "*/30 * * * *" ]
+
