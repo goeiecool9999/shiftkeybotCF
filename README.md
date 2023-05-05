@@ -1,2 +1,2 @@
 # **Discord shift key bot in cloudflare worker**
-This is the source code of a discord bot that runs in a cloudflare worker. Every 30 minutes the code scrapes Randy Pitchford's twitter account for the latest tweets and looks for shift codes. It then sends those tweets to all channels it can find named #shift-codes. It stores the codes it already found in a KV namespace.
+This is the source code of a discord bot that runs in a cloudflare worker. Every 30 minutes the code scrapes Randy Pitchford's twitter account for the latest tweets and looks for shift codes. It then sends those tweets to all channels it can find named #shift-codes. Found codes are stored in a KV namespace.
