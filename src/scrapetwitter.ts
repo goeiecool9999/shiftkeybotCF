@@ -11,31 +11,37 @@ type Tweet = {
     content: string
 };
 
-let processTweets = async (tweets: Tweet[], env: Env) => {
-    console.log(`checking ${tweets.length} tweets for new codes`)
-    let discord = new DiscordAPI(env.BOT_TOKEN);
-
+let findShiftKeyChannels = async (discord: DiscordAPI) => {
     let channels: string[] = [];
-    let channelObjectList = await discord.list_channels();
-    for (let chan of channelObjectList) {
-        if (chan.type != ChannelType.GuildText) {
+    const channelObjectList = await discord.list_channels();
+    for (const { id, type, name } of channelObjectList) {
+        if (type !== ChannelType.GuildText || name !== "shift-codes") {
             continue;
         }
-        if (chan.name !== "shift-codes") {
-            continue;
-        }
-        channels.push(chan.id);
+        channels.push(id);
     }
+    return channels
+}
+
+let processTweets = async (tweets: Tweet[], env: Env) => {
+    // prepare discord API
+    const discord = new DiscordAPI(env.BOT_TOKEN);
+
+    // find shift-codes channels
+    const channels = await findShiftKeyChannels(discord);
     console.log(`eligible channels are: ${channels}`);
 
-    let knownCodes: string[] = await env.KNOWN_CODES.list()
+    // retrieve known codes from KV
+    const knownCodes: string[] = await env.KNOWN_CODES.list()
         .then((l) => l.keys.map((k) => k.name));
 
     console.log(`known codes: ${knownCodes}`);
 
+    console.log(`checking ${tweets.length} tweets for new codes`)
+    //iterate tweets to discover new codes
     for (let tweet of tweets.reverse()) {
-        let codeRE = /(?:[A-Z0-9]{5}-){4}[A-Z0-9]{5}/;
-        let result = codeRE.exec(tweet.content);
+        const codeRE = /(?:[A-Z0-9]{5}-){4}[A-Z0-9]{5}/;
+        const result = codeRE.exec(tweet.content);
         if (result === null)
             continue;
 
@@ -48,13 +54,13 @@ let processTweets = async (tweets: Tweet[], env: Env) => {
         // create key for this code
         await env.KNOWN_CODES.put(result[0], "");
 
-        // send the message
-        let embed: APIEmbed = { title: "A new shift key was tweeted!", description: tweet.content, url: tweet.url };
-        let messageTest = { embeds: [embed] } as APIMessage;
+        // send the messages
+        const embed: APIEmbed = { title: "A new shift key was tweeted!", description: tweet.content, url: tweet.url };
+        const messageTest = { embeds: [embed] } as APIMessage;
 
         for (let channel of channels) {
             console.log(`attempting send to ${channel}`)
-            let fetchtest = await discord.send_message(channel, messageTest)
+            const fetchtest = await discord.send_message(channel, messageTest)
             if (fetchtest.status != 200) {
                 console.log(`failed to send message with code ${fetchtest.status} due to ${await JSON.stringify(fetchtest.json())}`)
             }
